@@ -1,5 +1,5 @@
 /**
- * Copyright Vasiliy Zhukov, vip.delete@gmail.com
+ * Copyright code.delete
  *
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 
 /**
- * @author Vasiliy Zhukov
+ * @author code.delete
  * @goal help
  * @requiresProject false
  * @threadSafe
