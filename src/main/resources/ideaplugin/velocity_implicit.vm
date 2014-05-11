@@ -1,0 +1,41 @@
+#* @implicitly included *#
+#* @vtlvariable name="buildDirectory" type="java.lang.String" file="idea-iml.vm" *#
+#* @vtlvariable name="context" type="com.googlecode.ideaplugin.IdeaPluginMojo" file="idea-iml.vm" *#
+#* @vtlvariable name="gaeHome" type="java.lang.String" file="idea-iml.vm" *#
+#* @vtlvariable name="MD" type="java.lang.String" file="idea-iml.vm" *#
+#* @vtlvariable name="packagingPom" type="java.lang.String" file="idea-iml.vm" *#
+#* @vtlvariable name="packagingWar" type="java.lang.String" file="idea-iml.vm" *#
+#* @vtlvariable name="project" type="org.apache.maven.project.MavenProject" file="idea-iml.vm" *#
+#* @vtlvariable name="context" type="com.googlecode.ideaplugin.IdeaPluginMojo" file="idea-ipr.vm" *#
+#* @vtlvariable name="M" type="java.lang.String" file="idea-ipr.vm" *#
+#* @vtlvariable name="jdkName" type="java.lang.String" file="idea-ipr.vm" *#
+#* @vtlvariable name="jdkLevel" type="java.lang.String" file="idea-ipr.vm" *#
+#* @vtlvariable name="linkRegexp" type="java.lang.String" file="idea-ipr.vm" *#
+#* @vtlvariable name="issueRegexp" type="java.lang.String" file="idea-ipr.vm" *#
+#* @vtlvariable name="issueNavigationExist" type="boolean" file="idea-ipr.vm" *#
+#* @vtlvariable name="mavenPluginExist" type="boolean" file="idea-ipr.vm" *#
+#* @vtlvariable name="wildcardResourcePatterns" type="java.lang.String" file="idea-ipr.vm" *#
+#* @vtlvariable name="gaeHome" type="java.lang.String" file="idea-ipr.vm" *#
+#* @vtlvariable name="assembleModulesIntoJars" type="boolean" file="idea-ipr.vm" *#
+#* @vtlvariable name="warProjects" type="java.util.List<org.apache.maven.project.MavenProject>" file="idea-ipr.vm" *#
+#* @vtlvariable name="optimizeImportsBeforeCommit" type="boolean" file="idea-iws.vm" *#
+#* @vtlvariable name="reformatCodeBeforeCommit" type="boolean" file="idea-iws.vm" *#
+#* @vtlvariable name="performCodeAnalysisBeforeCommit" type="boolean" file="idea-iws.vm" *#
+#* @vtlvariable name="compileInBackground" type="boolean" file="idea-iws.vm"*#
+#* @vtlvariable name="assertNotNull" type="boolean" file="idea-iws.vm"*#
+#* @vtlvariable name="gaeHome" type="java.lang.String" file="idea-iws.vm"*#
+#* @vtlvariable name="warProject" type="org.apache.maven.project.MavenProject" file="idea-iws.vm"*#
+#* @vtlvariable name="applicationServerName" type="java.lang.String" file="idea-iws.vm"*#
+#* @vtlvariable name="applicationServerTitle" type="java.lang.String" file="idea-iws.vm"*#
+#* @vtlvariable name="applicationServerConfigurationType" type="java.lang.String" file="idea-iws.vm"*#
+#* @vtlvariable name="applicationServerFullName" type="java.lang.String" file="idea-iws.vm"*#
+#* @vtlvariable name="applicationServerVersion" type="java.lang.String" file="idea-iws.vm"*#
+#* @vtlvariable name="openInBrowser" type="boolean" file="idea-iws.vm"*#
+#* @vtlvariable name="openInBrowserUrl" type="java.lang.String" file="idea-iws.vm"*#
+#* @vtlvariable name="vmParameters" type="java.lang.String" file="idea-iws.vm"*#
+#* @vtlvariable name="deploymentContextPath" type="java.lang.String" file="idea-iws.vm"*#
+#* @vtlvariable name="hideEmptyPackages" type="boolean" file="idea-iws.vm" *#
+#* @vtlvariable name="autoscrollToSource" type="boolean" file="idea-iws.vm"*#
+#* @vtlvariable name="autoscrollFromSource" type="boolean" file="idea-iws.vm"*#
+#* @vtlvariable name="sortByType" type="boolean" file="idea-iws.vm"*#
+#* @vtlvariable name="otherWarProjects" type="java.util.List<org.apache.maven.project.MavenProject>" file="idea-iws.vm" *#
