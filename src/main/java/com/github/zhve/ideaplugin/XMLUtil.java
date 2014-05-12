@@ -1,4 +1,4 @@
-package com.github.ideaplugin;
+package com.github.zhve.ideaplugin;
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one

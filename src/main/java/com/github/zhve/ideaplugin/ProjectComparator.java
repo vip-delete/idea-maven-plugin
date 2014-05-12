@@ -1,4 +1,4 @@
-package com.github.ideaplugin;
+package com.github.zhve.ideaplugin;
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -19,19 +19,21 @@ package com.github.ideaplugin;
  * under the License.
  */
 
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.project.MavenProject;
+
+import java.util.Comparator;
 
 /**
  * @author Vasiliy Zhukov
- * @since 7/28/2010
+ * @since 05/14/2011
  */
-@Mojo(name = "help", requiresProject = false, threadSafe = true)
-public class IdeaHelpMojo extends AbstractMojo {
+class ProjectComparator implements Comparator<MavenProject>
+{
+    public static final ProjectComparator INSTANCE = new ProjectComparator();
+
     @Override
-    public void execute() throws MojoExecutionException, MojoFailureException {
-        getLog().info("Have a look to https://github.com/vip-delete/idea-maven-plugin");
+    public int compare(MavenProject o1, MavenProject o2)
+    {
+        return o1.getArtifactId().compareTo(o2.getArtifactId());
     }
 }
