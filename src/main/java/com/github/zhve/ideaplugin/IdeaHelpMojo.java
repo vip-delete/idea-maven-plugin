@@ -32,6 +32,6 @@ import org.apache.maven.plugins.annotations.Mojo;
 public class IdeaHelpMojo extends AbstractMojo {
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        getLog().info("Have a look to https://github.com/vip-delete/idea-maven-plugin");
+        getLog().info("Have a look to https://github.com/zhve/idea-maven-plugin");
     }
 }
