@@ -1,4 +1,4 @@
-idea-maven-plugin
+IDEA Maven Plugin
 =================
 
-IntelliJIdea Workspace Creator
+Coming Soon...
