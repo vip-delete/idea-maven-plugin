@@ -43,11 +43,6 @@ import java.util.Map;
  * @since 07/26/2010
  */
 public abstract class IdeaPluginMojoBase extends AbstractMojo {
-    private static final Object SYNC = new Object();
-    private static volatile boolean initialized;
-    private static ArtifactHolder artifactHolder;
-    private static VelocityWorker velocityWorker;
-
     @Component
     private ArtifactResolver artifactResolver;
 
@@ -60,14 +55,15 @@ public abstract class IdeaPluginMojoBase extends AbstractMojo {
     @Component(role = ArtifactMetadataSource.class, hint = "maven")
     private ArtifactMetadataSource artifactMetadataSource;
 
-    @Parameter(property = "project", required = true, readonly = true)
-    private MavenProject project;
-
     @Parameter(property = "reactorProjects", required = true, readonly = true)
     private List<MavenProject> reactorProjects;
 
     @Parameter(property = "localRepository", required = true, readonly = true)
     private ArtifactRepository localRepository;
+
+    private ArtifactHolder artifactHolder;
+    private VelocityWorker velocityWorker;
+    private MavenProject project;
 
     // Getters
 
@@ -75,12 +71,12 @@ public abstract class IdeaPluginMojoBase extends AbstractMojo {
         return reactorProjects;
     }
 
-    protected MavenProject getProject() {
-        return project;
-    }
-
     protected ArtifactHolder getArtifactHolder() {
         return artifactHolder;
+    }
+
+    public MavenProject getProject() {
+        return project;
     }
 
     protected VelocityWorker getVelocityWorker() {
@@ -92,16 +88,12 @@ public abstract class IdeaPluginMojoBase extends AbstractMojo {
     @Override
     public final void execute() throws MojoExecutionException, MojoFailureException {
         try {
-            if (!initialized) {
-                synchronized (SYNC) {
-                    if (!initialized) {
-                        artifactHolder = new ArtifactHolder(reactorProjects, artifactFactory, artifactResolver, localRepository, artifactMetadataSource);
-                        velocityWorker = new VelocityWorker();
-                        initialized = true;
-                    }
-                }
+            artifactHolder = new ArtifactHolder(getLog(), reactorProjects, artifactFactory, artifactResolver, localRepository, artifactMetadataSource);
+            velocityWorker = new VelocityWorker();
+            for (MavenProject project : reactorProjects) {
+                this.project = project;
+                doExecute();
             }
-            doExecute();
         } catch (MojoExecutionException | MojoFailureException e) {
             throw e;
         } catch (Exception e) {
@@ -169,8 +161,10 @@ public abstract class IdeaPluginMojoBase extends AbstractMojo {
     public List<String> getReactorPaths() {
         List<String> list = new ArrayList<String>();
         list.add(new File(project.getFile().getParentFile(), project.getArtifactId() + ".iml").getAbsolutePath());
-        for (MavenProject reactor : (List<MavenProject>) project.getCollectedProjects())
-            list.add(new File(reactor.getFile().getParentFile(), reactor.getArtifactId() + ".iml").getAbsolutePath());
+        for (Object collectedProject : project.getCollectedProjects()) {
+            MavenProject reactorProject = (MavenProject) collectedProject;
+            list.add(new File(reactorProject.getFile().getParentFile(), reactorProject.getArtifactId() + ".iml").getAbsolutePath());
+        }
         return list;
     }
 }

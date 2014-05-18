@@ -13,7 +13,6 @@
 #* @vtlvariable name="linkRegexp" type="java.lang.String" file="idea-ipr.vm" *#
 #* @vtlvariable name="issueRegexp" type="java.lang.String" file="idea-ipr.vm" *#
 #* @vtlvariable name="issueNavigationExist" type="boolean" file="idea-ipr.vm" *#
-#* @vtlvariable name="mavenPluginExist" type="boolean" file="idea-ipr.vm" *#
 #* @vtlvariable name="wildcardResourcePatterns" type="java.lang.String" file="idea-ipr.vm" *#
 #* @vtlvariable name="gaeHome" type="java.lang.String" file="idea-ipr.vm" *#
 #* @vtlvariable name="assembleModulesIntoJars" type="boolean" file="idea-ipr.vm" *#

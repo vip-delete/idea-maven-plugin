@@ -37,7 +37,7 @@ import java.util.*;
  * @author Vasiliy Zhukov
  * @since 07/25/2010
  */
-@Mojo(name = "idea", threadSafe = true)
+@Mojo(name = "idea", aggregator = true)
 public class IdeaPluginMojo extends IdeaPluginMojoBase {
     /**
      * Enables/disables the assembling modules in jars for web artifacts
@@ -145,9 +145,8 @@ public class IdeaPluginMojo extends IdeaPluginMojoBase {
 
     /**
      * turn on/off "Autoscroll to Source" at Project Pane
-     *
-     * @parameter expression="autoscrollToSource" default-value="false"
      */
+    @Parameter(property = "autoscrollToSource", defaultValue = "false")
     private boolean autoscrollToSource;
 
     /**
@@ -218,7 +217,6 @@ public class IdeaPluginMojo extends IdeaPluginMojoBase {
                 throw new MojoExecutionException("Two or more war-packagins projects in reactor have the same artifactId, please make sure that <artifactId> is unique for each war-packagins project.");
         Collections.sort(warProjects, ProjectComparator.INSTANCE);
         context.put("warProjects", warProjects);
-        context.put("mavenPluginExist", artifactHolder.getProjectsWithPackaging("maven-plugin") != null);
 
         IssueManagement issueManagement = getProject().getIssueManagement();
         if (issueManagement != null) {

@@ -23,9 +23,10 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.apache.maven.artifact.resolver.ArtifactResolutionResult;
-import org.apache.maven.artifact.resolver.ArtifactResolver;
-import org.apache.maven.artifact.resolver.ResolutionNode;
+import org.apache.maven.artifact.resolver.*;
+import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 
 import java.util.*;
@@ -34,7 +35,7 @@ import java.util.*;
  * @author Vasiliy Zhukov
  * @since 07/25/2010
  */
-public class ArtifactHolder {
+class ArtifactHolder {
     /**
      * Common artifacts for all modules
      */
@@ -55,7 +56,7 @@ public class ArtifactHolder {
      */
     private Set<Artifact> reactorArtifacts;
 
-    public ArtifactHolder(List<MavenProject> reactorProjects, ArtifactFactory artifactFactory, ArtifactResolver artifactResolver, ArtifactRepository localRepository, ArtifactMetadataSource artifactMetadataSource) throws Exception {
+    public ArtifactHolder(Log log, List<MavenProject> reactorProjects, ArtifactFactory artifactFactory, ArtifactResolver artifactResolver, ArtifactRepository localRepository, ArtifactMetadataSource artifactMetadataSource) throws MojoExecutionException {
         // collect
         reactorArtifacts = new HashSet<>();
         for (MavenProject reactorProject : reactorProjects)
@@ -63,29 +64,53 @@ public class ArtifactHolder {
         reactorArtifacts = Collections.unmodifiableSet(reactorArtifacts);
 
         // Resolve dependencies
-        Map<MavenProject, ArtifactDependencyHelper.DependencyData> dependencyDataMap = ArtifactDependencyHelper.findDependencies(artifactFactory, reactorProjects);
+        Map<MavenProject, ArtifactDependencyHelper.DependencyData> dependencyDataMap;
+        try {
+            dependencyDataMap = ArtifactDependencyHelper.findDependencies(log, artifactFactory, reactorProjects);
+        } catch (InvalidVersionSpecificationException e) {
+            throw new MojoExecutionException(e.getMessage(), e);
+        }
 
         // Resolve transitively
+        Map<MavenProject, ArtifactDependencyHelper.DependencyData> dependencyDataNewMap = new LinkedHashMap<>();
         for (Map.Entry<MavenProject, ArtifactDependencyHelper.DependencyData> entry : dependencyDataMap.entrySet()) {
             MavenProject project = entry.getKey();
             ArtifactDependencyHelper.DependencyData dependencyData = entry.getValue();
+            ArtifactDependencyHelper.DependencyData dependencyDataNew = new ArtifactDependencyHelper.DependencyData();
+            dependencyDataNew.getReactorDependencies().addAll(dependencyData.getReactorDependencies());
+            dependencyDataNewMap.put(project, dependencyDataNew);
 
             if (!"pom".equals(project.getPackaging())) {
-                if (!dependencyData.remoteDependencies.isEmpty()) {
+                if (!dependencyData.getRemoteDependencies().isEmpty()) {
                     // search
-                    // TODO: add flag to ignore resolution errors
-                    ArtifactResolutionResult resolutionResult = artifactResolver.resolveTransitively(
-                            dependencyData.remoteDependencies,
-                            project.getArtifact(),
-                            project.getManagedVersionMap(),
-                            localRepository,
-                            project.getRemoteArtifactRepositories(),
-                            artifactMetadataSource
-                    );
-
-                    // save search result
-                    for (Object resolutionNode : resolutionResult.getArtifactResolutionNodes())
-                        dependencyData.remoteDependencies.add(((ResolutionNode) resolutionNode).getArtifact());
+                    ArtifactResolutionResult resolutionResult;
+                    log.info("");
+                    log.info("Resolve Transitively: " + project.getArtifact().getId());
+                    log.info("");
+                    log.info("Before:");
+                    for (Artifact a : dependencyData.getRemoteDependencies())
+                    log.info("  " + a.getId() + ":" + a.getScope());
+                    log.info("");
+                    try {
+                        resolutionResult = artifactResolver.resolveTransitively(
+                                dependencyData.getRemoteDependencies(),
+                                project.getArtifact(),
+                                project.getManagedVersionMap(),
+                                localRepository,
+                                project.getRemoteArtifactRepositories(),
+                                artifactMetadataSource
+                        );
+                        // save search result
+                        log.info("After:");
+                        for (Object resolutionNode : resolutionResult.getArtifactResolutionNodes()) {
+                            Artifact art = ((ResolutionNode) resolutionNode).getArtifact();
+                            log.info("  " + art.getId() + ":" + art.getScope());
+                            dependencyDataNew.getRemoteDependencies().add(art);
+                        }
+                    } catch (ArtifactResolutionException | ArtifactNotFoundException e) {
+                        // TODO: add flag to ignore resolution errors
+                        throw new MojoExecutionException(e.getMessage(), e);
+                    }
                 }
             }
         }
@@ -94,22 +119,22 @@ public class ArtifactHolder {
         Set<Artifact> commonSet = new HashSet<>();
         Set<Artifact> fullSet = new HashSet<>();
         boolean added = false;
-        for (ArtifactDependencyHelper.DependencyData data : dependencyDataMap.values()) {
+        for (ArtifactDependencyHelper.DependencyData data : dependencyDataNewMap.values()) {
             // add to full
-            fullSet.addAll(data.remoteDependencies);
+            fullSet.addAll(data.getRemoteDependencies());
 
             // add to common
             if (added) {
-                commonSet.retainAll(data.remoteDependencies);
+                commonSet.retainAll(data.getRemoteDependencies());
             } else {
-                commonSet.addAll(data.remoteDependencies);
+                commonSet.addAll(data.getRemoteDependencies());
                 added = true;
             }
         }
 
         // Remove commonSet from dependencies
-        for (ArtifactDependencyHelper.DependencyData data : dependencyDataMap.values())
-            data.remoteDependencies.removeAll(commonSet);
+        for (ArtifactDependencyHelper.DependencyData data : dependencyDataNewMap.values())
+            data.getRemoteDependencies().removeAll(commonSet);
 
         // Remote commonSet from fullSet
         fullSet.removeAll(commonSet);
@@ -127,11 +152,11 @@ public class ArtifactHolder {
         // Save dependencyMap
 
         this.dependencyMap = new HashMap<>();
-        for (Map.Entry<MavenProject, ArtifactDependencyHelper.DependencyData> entry : dependencyDataMap.entrySet()) {
+        for (Map.Entry<MavenProject, ArtifactDependencyHelper.DependencyData> entry : dependencyDataNewMap.entrySet()) {
             MavenProject project = entry.getKey();
             List<Artifact> artifacts = new ArrayList<>();
-            artifacts.addAll(entry.getValue().remoteDependencies);
-            artifacts.addAll(entry.getValue().reactorDependencies);
+            artifacts.addAll(entry.getValue().getRemoteDependencies());
+            artifacts.addAll(entry.getValue().getReactorDependencies());
             Collections.sort(artifacts, ArtifactComparator.INSTANCE);
             this.dependencyMap.put(project, Collections.unmodifiableList(artifacts));
         }
@@ -160,16 +185,5 @@ public class ArtifactHolder {
             if (project.getPackaging().equals(packaging))
                 projects.add(project);
         return projects;
-    }
-
-    // Private
-
-    private static class ArtifactComparator implements Comparator<Artifact> {
-        public static final ArtifactComparator INSTANCE = new ArtifactComparator();
-
-        @Override
-        public int compare(Artifact o1, Artifact o2) {
-            return o1.getId().compareTo(o2.getId());
-        }
     }
 }

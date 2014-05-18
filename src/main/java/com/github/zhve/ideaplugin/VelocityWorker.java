@@ -29,14 +29,12 @@ import org.apache.velocity.runtime.RuntimeConstants;
  * @author Vasiliy Zhukov
  * @since 07/27/2010
  */
-class VelocityWorker
-{
+class VelocityWorker {
     private Template imlTemplate;
     private Template iprTemplate;
     private Template iwsTemplate;
 
-    public VelocityWorker() throws Exception
-    {
+    public VelocityWorker() throws Exception {
         Velocity.addProperty("resource.loader", "class");
         Velocity.addProperty("class.resource.loader.class", "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
         Velocity.addProperty(RuntimeConstants.RUNTIME_LOG, System.getProperty("java.io.tmpdir") + "/velocity.log");
@@ -49,18 +47,15 @@ class VelocityWorker
 
     // Getters
 
-    public Template getImlTemplate()
-    {
+    public Template getImlTemplate() {
         return imlTemplate;
     }
 
-    public Template getIprTemplate()
-    {
+    public Template getIprTemplate() {
         return iprTemplate;
     }
 
-    public Template getIwsTemplate()
-    {
+    public Template getIwsTemplate() {
         return iwsTemplate;
     }
 }
