@@ -94,7 +94,9 @@ public abstract class IdeaPluginMojoBase extends AbstractMojo {
                 this.project = project;
                 doExecute();
             }
-        } catch (MojoExecutionException | MojoFailureException e) {
+        } catch (MojoExecutionException e) {
+            throw e;
+        } catch (MojoFailureException e) {
             throw e;
         } catch (Exception e) {
             throw new MojoFailureException(e.getMessage(), e);

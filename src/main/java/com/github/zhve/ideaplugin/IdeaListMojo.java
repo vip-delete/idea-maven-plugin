@@ -43,14 +43,14 @@ public class IdeaListMojo extends AbstractMojo {
         ArtifactHolder artifactHolder = new ArtifactHolder(getLog(), reactorProjects, artifactFactory, artifactResolver, localRepository, artifactMetadataSource);
 
         for (MavenProject project : reactorProjects) {
-            List<Artifact> list = new ArrayList<>();
+            List<Artifact> list = new ArrayList<Artifact>();
             list.addAll(artifactHolder.getCommonDependencies());
             list.addAll(artifactHolder.getDependencies(project));
             Collections.sort(list, ArtifactComparator.INSTANCE);
 
             getLog().info("\n" +
                     "[INFO] ------------------------------------------------------------------------\n" +
-                    "[INFO] Listing " + project.getName() + " " + project.getVersion() + "\n" +
+                    "[INFO] Listing " + project.getName() + " " + project.getId() + "\n" +
                     "[INFO] ------------------------------------------------------------------------\n" +
                     "[INFO] \n" +
                     "[INFO] --- \n" +

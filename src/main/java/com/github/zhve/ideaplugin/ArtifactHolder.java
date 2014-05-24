@@ -58,7 +58,7 @@ class ArtifactHolder {
 
     public ArtifactHolder(Log log, List<MavenProject> reactorProjects, ArtifactFactory artifactFactory, ArtifactResolver artifactResolver, ArtifactRepository localRepository, ArtifactMetadataSource artifactMetadataSource) throws MojoExecutionException {
         // collect
-        reactorArtifacts = new HashSet<>();
+        reactorArtifacts = new HashSet<Artifact>();
         for (MavenProject reactorProject : reactorProjects)
             reactorArtifacts.add(reactorProject.getArtifact());
         reactorArtifacts = Collections.unmodifiableSet(reactorArtifacts);
@@ -72,92 +72,111 @@ class ArtifactHolder {
         }
 
         // Resolve transitively
-        Map<MavenProject, ArtifactDependencyHelper.DependencyData> dependencyDataNewMap = new LinkedHashMap<>();
+        Map<MavenProject, ArtifactDependencyHelper.DependencyData> dependencyDataNewMap = new LinkedHashMap<MavenProject, ArtifactDependencyHelper.DependencyData>();
         for (Map.Entry<MavenProject, ArtifactDependencyHelper.DependencyData> entry : dependencyDataMap.entrySet()) {
             MavenProject project = entry.getKey();
             ArtifactDependencyHelper.DependencyData dependencyData = entry.getValue();
-            ArtifactDependencyHelper.DependencyData dependencyDataNew = new ArtifactDependencyHelper.DependencyData();
-            dependencyDataNew.getReactorDependencies().addAll(dependencyData.getReactorDependencies());
-            dependencyDataNewMap.put(project, dependencyDataNew);
 
-            if (!"pom".equals(project.getPackaging())) {
-                if (!dependencyData.getRemoteDependencies().isEmpty()) {
-                    // search
-                    ArtifactResolutionResult resolutionResult;
-                    log.info("");
-                    log.info("Resolve Transitively: " + project.getArtifact().getId());
-                    log.info("");
-                    log.info("Before:");
-                    for (Artifact a : dependencyData.getRemoteDependencies())
+            List<Artifact> remoteData = new ArrayList<Artifact>();
+            if (!dependencyData.getRemoteList().isEmpty()) {
+                // search
+                ArtifactResolutionResult resolutionResult;
+                log.info("");
+                log.info("Resolve Transitively: " + project.getArtifact().getId());
+                log.info("");
+                log.info("Before:");
+                for (Artifact a : dependencyData.getRemoteList())
                     log.info("  " + a.getId() + ":" + a.getScope());
-                    log.info("");
-                    try {
-                        resolutionResult = artifactResolver.resolveTransitively(
-                                dependencyData.getRemoteDependencies(),
-                                project.getArtifact(),
-                                project.getManagedVersionMap(),
-                                localRepository,
-                                project.getRemoteArtifactRepositories(),
-                                artifactMetadataSource
-                        );
-                        // save search result
-                        log.info("After:");
-                        for (Object resolutionNode : resolutionResult.getArtifactResolutionNodes()) {
-                            Artifact art = ((ResolutionNode) resolutionNode).getArtifact();
-                            log.info("  " + art.getId() + ":" + art.getScope());
-                            dependencyDataNew.getRemoteDependencies().add(art);
-                        }
-                    } catch (ArtifactResolutionException | ArtifactNotFoundException e) {
-                        // TODO: add flag to ignore resolution errors
-                        throw new MojoExecutionException(e.getMessage(), e);
+                log.info("");
+                try {
+                    resolutionResult = artifactResolver.resolveTransitively(
+                            new LinkedHashSet<Artifact>(dependencyData.getRemoteList()),
+                            project.getArtifact(),
+                            project.getManagedVersionMap(),
+                            localRepository,
+                            project.getRemoteArtifactRepositories(),
+                            artifactMetadataSource
+                    );
+                    // save search result
+                    log.info("After:");
+                    for (Object resolutionNode : resolutionResult.getArtifactResolutionNodes()) {
+                        Artifact art = ((ResolutionNode) resolutionNode).getArtifact();
+                        log.info("  " + art.getId() + ":" + art.getScope());
+                        remoteData.add(art);
                     }
+                } catch (ArtifactResolutionException e) {
+                    // TODO: add flag to ignore resolution errors
+                    throw new MojoExecutionException(e.getMessage(), e);
+                } catch (ArtifactNotFoundException e) {
+                    // TODO: add flag to ignore resolution errors
+                    throw new MojoExecutionException(e.getMessage(), e);
                 }
             }
+            dependencyDataNewMap.put(project, new ArtifactDependencyHelper.DependencyData(remoteData, dependencyData.getReactorList()));
         }
 
         // Find common dependencies
-        Set<Artifact> commonSet = new HashSet<>();
-        Set<Artifact> fullSet = new HashSet<>();
+        Map<String, Artifact> commonMap = new TreeMap<String, Artifact>();
+        Map<String, Artifact> fullMap = new TreeMap<String, Artifact>();
         boolean added = false;
         for (ArtifactDependencyHelper.DependencyData data : dependencyDataNewMap.values()) {
+            Map<String, Artifact> remoteMap = new HashMap<String, Artifact>();
+            for (Artifact artifact : data.getRemoteList())
+                remoteMap.put(artifact.getId() + ":" + artifact.getScope(), artifact);
+
             // add to full
-            fullSet.addAll(data.getRemoteDependencies());
+            fullMap.putAll(remoteMap);
 
             // add to common
             if (added) {
-                commonSet.retainAll(data.getRemoteDependencies());
+                commonMap.keySet().retainAll(remoteMap.keySet());
             } else {
-                commonSet.addAll(data.getRemoteDependencies());
+                commonMap.putAll(remoteMap);
                 added = true;
             }
         }
 
-        // Remove commonSet from dependencies
-        for (ArtifactDependencyHelper.DependencyData data : dependencyDataNewMap.values())
-            data.getRemoteDependencies().removeAll(commonSet);
-
         // Remote commonSet from fullSet
-        fullSet.removeAll(commonSet);
+        fullMap.keySet().removeAll(commonMap.keySet());
+
+        log.info("");
+        log.info("Common Dependencies");
+        log.info("");
+        for (String id : commonMap.keySet())
+            log.info("  " + id);
+
+        log.info("");
+        log.info("Full Dependencies");
+        log.info("");
+        for (String id : fullMap.keySet())
+            log.info("  " + id);
 
         // Save commonDependencies
-        commonDependencies = new ArrayList<>(commonSet);
+        commonDependencies = new ArrayList<Artifact>(commonMap.values());
         Collections.sort(this.commonDependencies, ArtifactComparator.INSTANCE);
         commonDependencies = Collections.unmodifiableList(this.commonDependencies);
 
         // Save allDependencies
-        allDependencies = new ArrayList<>(fullSet);
+        allDependencies = new ArrayList<Artifact>(fullMap.values());
         Collections.sort(allDependencies, ArtifactComparator.INSTANCE);
         allDependencies = Collections.unmodifiableList(allDependencies);
 
         // Save dependencyMap
 
-        this.dependencyMap = new HashMap<>();
+        this.dependencyMap = new HashMap<MavenProject, List<Artifact>>();
         for (Map.Entry<MavenProject, ArtifactDependencyHelper.DependencyData> entry : dependencyDataNewMap.entrySet()) {
             MavenProject project = entry.getKey();
-            List<Artifact> artifacts = new ArrayList<>();
-            artifacts.addAll(entry.getValue().getRemoteDependencies());
-            artifacts.addAll(entry.getValue().getReactorDependencies());
-            Collections.sort(artifacts, ArtifactComparator.INSTANCE);
+            // Remove commonSet from dependencies
+            List<Artifact> remoteList = new ArrayList<Artifact>();
+            for (Artifact artifact : entry.getValue().getRemoteList())
+                if (!commonMap.containsKey(artifact.getId() + ":" + artifact.getScope()))
+                    remoteList.add(artifact);
+            List<Artifact> reactorList = new ArrayList<Artifact>(entry.getValue().getReactorList());
+            Collections.sort(remoteList, ArtifactComparator.INSTANCE);
+            Collections.sort(reactorList, ArtifactComparator.INSTANCE);
+            List<Artifact> artifacts = new ArrayList<Artifact>();
+            artifacts.addAll(reactorList);
+            artifacts.addAll(remoteList);
             this.dependencyMap.put(project, Collections.unmodifiableList(artifacts));
         }
     }
@@ -180,7 +199,7 @@ class ArtifactHolder {
     }
 
     public List<MavenProject> getProjectsWithPackaging(String packaging) {
-        List<MavenProject> projects = new ArrayList<>();
+        List<MavenProject> projects = new ArrayList<MavenProject>();
         for (MavenProject project : dependencyMap.keySet())
             if (project.getPackaging().equals(packaging))
                 projects.add(project);

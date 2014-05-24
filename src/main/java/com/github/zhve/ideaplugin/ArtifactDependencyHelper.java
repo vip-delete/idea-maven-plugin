@@ -47,126 +47,121 @@ class ArtifactDependencyHelper {
      */
     public static Map<MavenProject, DependencyData> findDependencies(Log log, ArtifactFactory artifactFactory, List<MavenProject> reactorProjects) throws InvalidVersionSpecificationException {
         // collect ids
-        Set<Artifact> reactorArtifacts = new HashSet<>();
+        Set<Artifact> reactorArtifacts = new HashSet<Artifact>();
         log.info("");
         log.info("Reactor Artifacts");
         log.info("");
         for (MavenProject reactorProject : reactorProjects) {
-            log.info(" " + reactorProject.getArtifact().getId());
+            log.info(reactorProject.getArtifact().getId());
             reactorArtifacts.add(reactorProject.getArtifact());
         }
 
         // artifact -> all transitive dependencies
-        Map<Artifact, DependencyData> dependencyMap = new HashMap<>();
+        Map<Artifact, DependencyData> dependencyMap = new HashMap<Artifact, DependencyData>();
         log.info("");
-        log.info("Resolve Dependencies");
-        log.info("");
+        log.info("Detect Dependencies");
         for (MavenProject project : reactorProjects) {
-            log.info(" " + project.getId());
-            DependencyData dependencyData = new DependencyData();
+            log.info("");
+            log.info(project.getId());
+            List<Artifact> remoteData = new ArrayList<Artifact>();
+            List<Artifact> reactorData = new ArrayList<Artifact>();
             for (Object object : project.getDependencies()) {
                 Dependency dependency = (Dependency) object;
                 Artifact dependencyArtifact = toDependencyArtifact(artifactFactory, dependency);
                 boolean reactor = reactorArtifacts.contains(dependencyArtifact);
                 if (reactor)
-                    log.info(" R " + dependencyArtifact.getId());
+                    log.info("R " + dependencyArtifact.getId() + ":" + dependencyArtifact.getScope());
                 else
-                    log.info("   " + dependencyArtifact.getId() + ":" + dependencyArtifact.getScope());
+                    log.info("  " + dependencyArtifact.getId() + ":" + dependencyArtifact.getScope());
 
                 // add to dependency
                 if (reactor)
-                    dependencyData.getReactorDependencies().add(dependencyArtifact);
+                    reactorData.add(dependencyArtifact);
                 else
-                    dependencyData.getRemoteDependencies().add(dependencyArtifact);
+                    remoteData.add(dependencyArtifact);
             }
 
             // save dependency data for project
-            dependencyMap.put(project.getArtifact(), dependencyData);
+            dependencyMap.put(project.getArtifact(), new DependencyData(remoteData, reactorData));
         }
 
-        // transitive resolution
         log.info("");
-        log.info("Transitive Resolve Dependencies");
-        log.info("");
-        Map<MavenProject, DependencyData> result = new LinkedHashMap<>();
+        log.info("Resolve Dependencies");
+        Map<MavenProject, DependencyData> result = new LinkedHashMap<MavenProject, DependencyData>();
         for (MavenProject project : reactorProjects) {
-            log.info(" " + project.getId());
-            Map<String, Artifact> remoteDependencies = new LinkedHashMap<>();
-            Set<Artifact> reactorDependencies = new LinkedHashSet<>();
-            findRecursiveArtifacts(log, 1, "", artifactFactory, project, project.getArtifact(), remoteDependencies, reactorDependencies, dependencyMap);
-            DependencyData dependencyData = new DependencyData();
-            dependencyData.getRemoteDependencies().addAll(remoteDependencies.values());
-            dependencyData.getReactorDependencies().addAll(reactorDependencies);
-            result.put(project, dependencyData);
-        }
-        return result;
-    }
+            log.info("");
+            log.info(project.getId());
+            Map<String, Artifact> reactorData = new LinkedHashMap<String, Artifact>();
+            Map<String, Artifact> remoteData = new LinkedHashMap<String, Artifact>();
 
-    /**
-     * Find all dependencies for given reactor artifact
-     *
-     * @param reactorArtifact      reactor artifact
-     * @param remoteDependencies   collector for remote transitive dependencies
-     * @param reactorDependencies  collector for reactor transitive dependencies
-     * @param reactorDependencyMap only reactor dependency map: reactor artifact -> dependencyData
-     */
-    private static void findRecursiveArtifacts(Log log, int level, String indent, ArtifactFactory artifactFactory, MavenProject project, Artifact reactorArtifact,
-                                               Map<String, Artifact> remoteDependencies,
-                                               Set<Artifact> reactorDependencies,
-                                               Map<Artifact, DependencyData> reactorDependencyMap) {
-        // current dependency
-        DependencyData artifactDependencyData = reactorDependencyMap.get(reactorArtifact);
-
-        // add remote artifacts
-        for (Artifact dependency : artifactDependencyData.getRemoteDependencies()) {
-            String dependencyConflictId = dependency.getDependencyConflictId();
-            Artifact dependencyArtifact;
-            if (level == 0)
-                dependencyArtifact = dependency;
-            else {
-                dependencyArtifact = artifactFactory.createDependencyArtifact(dependency.getGroupId(),
-                        dependency.getArtifactId(),
-                        dependency.getVersionRange(),
-                        dependency.getType(),
-                        dependency.getClassifier(),
-                        dependency.getScope(),
-                        reactorArtifact.getScope(),
-                        dependency.isOptional()
-                );
-                if (dependencyArtifact != null)
-                    dependencyArtifact.setDependencyFilter(dependency.getDependencyFilter());
-            }
-
-            if (dependencyArtifact != null) {
-                String fullName = dependencyArtifact.getId() + ":" + dependencyArtifact.getScope();
-                Artifact remoteArtifact = remoteDependencies.get(dependencyConflictId);
-                if (remoteArtifact == null) {
-                    // new remote dependency
-                    log.info(indent + "    " + dependencyArtifact.getId() + ":" + dependencyArtifact.getScope());
-                    remoteDependencies.put(dependencyConflictId, dependencyArtifact);
-                } else {
-                    // we have already added this remote dependency
-                    if (remoteArtifact.getId().equals(dependencyArtifact.getId())) {
-                        log.info(indent + " D " + fullName);
+            Queue<Artifact> queue = new LinkedList<Artifact>();
+            queue.add(project.getArtifact());
+            while (!queue.isEmpty()) {
+                Artifact artifact = queue.poll();
+                DependencyData artifactDependencyData = dependencyMap.get(artifact);
+                // analyze all remote dependencies for given level
+                for (Artifact dependency : artifactDependencyData.getRemoteList()) {
+                    String dependencyConflictId = dependency.getDependencyConflictId();
+                    Artifact dependencyArtifact = toDependencyArtifact(artifactFactory, dependency, artifact.getScope());
+                    if (dependencyArtifact != null) {
+                        String fullName = dependencyArtifact.getId() + ":" + dependencyArtifact.getScope();
+                        Artifact prevArtifact = remoteData.get(dependencyConflictId);
+                        if (prevArtifact == null) {
+                            // new remote dependency
+                            log.info("  " + fullName);
+                            remoteData.put(dependencyConflictId, dependencyArtifact);
+                        } else {
+                            // we have already added this remote dependency
+                            if (prevArtifact.getId().equals(dependencyArtifact.getId())) {
+                                log.info("D " + fullName);
+                            } else {
+                                // TODO: version resolution
+                                log.info("C " + fullName);
+                                log.info("  " + project.getArtifact().getId());
+                                log.info("  " + "+-" + prevArtifact.getId() + ":" + prevArtifact.getScope());
+                                log.info("  " + "+-" + artifact.getId());
+                                log.info("  " + "  \\-" + fullName);
+                            }
+                        }
                     } else {
-                        log.info(indent + " E " + fullName);
-                        log.info(indent + "    " + project.getArtifact().getId());
-                        log.info(indent + "    " + "+- " + remoteArtifact.getId() + ":" + remoteArtifact.getScope());
-                        log.info(indent + "    " + "+- " + reactorArtifact.getId());
-                        log.info(indent + "    " + "   \\-" + fullName);
+                        log.info("O " + dependency.getId() + ":" + dependency.getScope());
                     }
                 }
-            } else {
-                log.info(indent + " O " + dependency.getId() + ":" + dependency.getScope() + " (level=" + level + ")");
-            }
-        }
 
-        // repeat for each reactor artifact dependency
-        for (Artifact reactorArtifactDependency : artifactDependencyData.getReactorDependencies()) {
-            log.info(indent + " R " + reactorArtifact.getId());
-            reactorDependencies.add(reactorArtifactDependency);
-            findRecursiveArtifacts(log, level + 1, indent + "  ", artifactFactory, project, reactorArtifactDependency, remoteDependencies, reactorDependencies, reactorDependencyMap);
+                // analyze all reactor dependencies for given level
+                for (Artifact dependency : artifactDependencyData.getReactorList()) {
+                    String dependencyConflictId = dependency.getDependencyConflictId();
+                    Artifact dependencyArtifact = toDependencyArtifact(artifactFactory, dependency, artifact.getScope());
+                    if (dependencyArtifact != null) {
+                        String fullName = dependencyArtifact.getId() + ":" + dependencyArtifact.getScope();
+                        Artifact prevArtifact = reactorData.get(dependencyConflictId);
+                        if (prevArtifact == null) {
+                            // new reactor dependency
+                            log.info("R " + fullName);
+                            reactorData.put(dependencyConflictId, dependencyArtifact);
+                            // go deep
+                            queue.add(dependencyArtifact);
+                        } else {
+                            // we have already added this remote dependency
+                            if (prevArtifact.getId().equals(dependencyArtifact.getId())) {
+                                log.info("D " + fullName);
+                            } else {
+                                // TODO: version resolution
+                                log.info("C " + fullName);
+                                log.info("  " + project.getArtifact().getId());
+                                log.info("  " + "+-" + prevArtifact.getId() + ":" + prevArtifact.getScope());
+                                log.info("  " + "+-" + artifact.getId());
+                                log.info("  " + "  \\-" + fullName);
+                            }
+                        }
+                    } else {
+                        log.info("O " + dependency.getId() + ":" + dependency.getScope());
+                    }
+                }
+            }
+            result.put(project, new DependencyData(new ArrayList<Artifact>(remoteData.values()), new ArrayList<Artifact>(reactorData.values())));
         }
+        return result;
     }
 
     /**
@@ -191,7 +186,7 @@ class ArtifactDependencyHelper {
 
         // apply exclusions is needed
         if (!dependency.getExclusions().isEmpty()) {
-            List<String> exclusions = new ArrayList<>();
+            List<String> exclusions = new ArrayList<String>();
             for (Exclusion exclusion : dependency.getExclusions())
                 exclusions.add(exclusion.getGroupId() + ":" + exclusion.getArtifactId());
             dependencyArtifact.setDependencyFilter(new ExcludesArtifactFilter(exclusions));
@@ -205,18 +200,50 @@ class ArtifactDependencyHelper {
         return dependencyArtifact;
     }
 
+    private static Artifact toDependencyArtifact(ArtifactFactory artifactFactory, Artifact dependency, String inheritedScope) {
+        Artifact dependencyArtifact = artifactFactory.createDependencyArtifact(dependency.getGroupId(),
+                dependency.getArtifactId(),
+                dependency.getVersionRange(),
+                dependency.getType(),
+                dependency.getClassifier(),
+                dependency.getScope(),
+                inheritedScope,
+                dependency.isOptional()
+        );
+        if (dependencyArtifact != null)
+            dependencyArtifact.setDependencyFilter(dependency.getDependencyFilter());
+        return dependencyArtifact;
+    }
+
     // Classes
 
     public static class DependencyData {
-        private final Set<Artifact> remoteDependencies = new LinkedHashSet<>();  // non reactor artifact dependencies
-        private final Set<Artifact> reactorDependencies = new LinkedHashSet<>(); // reactor artifact dependencies
+        private final List<Artifact> remoteList;
+        private final List<Artifact> reactorList;
 
-        public Set<Artifact> getRemoteDependencies() {
-            return remoteDependencies;
+        public DependencyData(List<Artifact> remoteList, List<Artifact> reactorList) {
+            this.remoteList = Collections.unmodifiableList(remoteList);
+            this.reactorList = Collections.unmodifiableList(reactorList);
         }
 
-        public Set<Artifact> getReactorDependencies() {
-            return reactorDependencies;
+        public List<Artifact> getRemoteList() {
+            return remoteList;
+        }
+
+        public List<Artifact> getReactorList() {
+            return reactorList;
+        }
+    }
+
+    // Private Classes
+
+    private static class ArtifactLevel {
+        int level;
+        Artifact artifact;
+
+        private ArtifactLevel(int level, Artifact artifact) {
+            this.level = level;
+            this.artifact = artifact;
         }
     }
 }

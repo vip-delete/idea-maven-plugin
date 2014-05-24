@@ -1,12 +1,12 @@
 #* @implicitly included *#
 #* @vtlvariable name="buildDirectory" type="java.lang.String" file="idea-iml.vm" *#
-#* @vtlvariable name="context" type="com.googlecode.ideaplugin.IdeaPluginMojo" file="idea-iml.vm" *#
+#* @vtlvariable name="context" type="com.github.zhve.ideaplugin.IdeaPluginMojo" file="idea-iml.vm" *#
 #* @vtlvariable name="gaeHome" type="java.lang.String" file="idea-iml.vm" *#
 #* @vtlvariable name="MD" type="java.lang.String" file="idea-iml.vm" *#
 #* @vtlvariable name="packagingPom" type="java.lang.String" file="idea-iml.vm" *#
 #* @vtlvariable name="packagingWar" type="java.lang.String" file="idea-iml.vm" *#
 #* @vtlvariable name="project" type="org.apache.maven.project.MavenProject" file="idea-iml.vm" *#
-#* @vtlvariable name="context" type="com.googlecode.ideaplugin.IdeaPluginMojo" file="idea-ipr.vm" *#
+#* @vtlvariable name="context" type="com.github.zhve.ideaplugin.IdeaPluginMojo" file="idea-ipr.vm" *#
 #* @vtlvariable name="M" type="java.lang.String" file="idea-ipr.vm" *#
 #* @vtlvariable name="jdkName" type="java.lang.String" file="idea-ipr.vm" *#
 #* @vtlvariable name="jdkLevel" type="java.lang.String" file="idea-ipr.vm" *#
