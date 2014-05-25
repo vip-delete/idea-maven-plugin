@@ -102,6 +102,7 @@ class ArtifactDependencyHelper {
                 Artifact artifact = queue.poll();
                 log.info("# " + artifact.getId() + ":" + artifact.getScope());
                 DependencyData artifactDependencyData = dependencyMap.get(artifact);
+
                 // analyze all remote dependencies for given level
                 for (Artifact dependency : artifactDependencyData.getRemoteList()) {
                     String dependencyConflictId = dependency.getDependencyConflictId();
@@ -118,7 +119,6 @@ class ArtifactDependencyHelper {
                             if (prevArtifact.getId().equals(dependencyArtifact.getId())) {
                                 log.info("D " + fullName);
                             } else {
-                                // TODO: version resolution
                                 log.info("C " + fullName);
                                 log.info("  " + project.getArtifact().getId());
                                 log.info("  " + "+-" + prevArtifact.getId() + ":" + prevArtifact.getScope());
@@ -149,7 +149,6 @@ class ArtifactDependencyHelper {
                             if (prevArtifact.getId().equals(dependencyArtifact.getId())) {
                                 log.info("D " + fullName);
                             } else {
-                                // TODO: version resolution
                                 log.info("C " + fullName);
                                 log.info("  " + project.getArtifact().getId());
                                 log.info("  " + "+-" + prevArtifact.getId() + ":" + prevArtifact.getScope());
@@ -235,18 +234,6 @@ class ArtifactDependencyHelper {
 
         public List<Artifact> getReactorList() {
             return reactorList;
-        }
-    }
-
-    // Private Classes
-
-    private static class ArtifactLevel {
-        int level;
-        Artifact artifact;
-
-        private ArtifactLevel(int level, Artifact artifact) {
-            this.level = level;
-            this.artifact = artifact;
         }
     }
 }

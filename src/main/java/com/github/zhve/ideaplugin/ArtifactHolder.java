@@ -110,10 +110,8 @@ class ArtifactHolder {
                         }
                     }
                 } catch (ArtifactResolutionException e) {
-                    // TODO: add flag to ignore resolution errors
                     throw new MojoExecutionException(e.getMessage(), e);
                 } catch (ArtifactNotFoundException e) {
-                    // TODO: add flag to ignore resolution errors
                     throw new MojoExecutionException(e.getMessage(), e);
                 }
             }
