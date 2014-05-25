@@ -238,6 +238,10 @@ public class IdeaPluginMojo extends IdeaPluginMojoBase {
                 context.put("issueNavigationExist", Boolean.TRUE);
                 context.put("issueRegexp", "\\d+");
                 context.put("linkRegexp", url + "/issues/detail?id=$0");
+            } else if ("GitHub".equalsIgnoreCase(system)) {
+                context.put("issueNavigationExist", Boolean.TRUE);
+                context.put("issueRegexp", "\\d+");
+                context.put("linkRegexp", url + "/issues/$0");
             }
         }
 
