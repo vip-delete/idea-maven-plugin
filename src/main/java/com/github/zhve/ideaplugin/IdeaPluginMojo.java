@@ -243,6 +243,7 @@ public class IdeaPluginMojo extends IdeaPluginMojoBase {
                 context.put("issueRegexp", "\\d+");
                 context.put("linkRegexp", url + "/issues/$0");
             }
+
         }
 
         createFile(context, velocityWorker.getIprTemplate(), "ipr");
