@@ -46,13 +46,13 @@ public class IdeaListMojo extends AbstractMojo {
             List<Artifact> list = new ArrayList<Artifact>(artifactHolder.getDependencies(project));
             Collections.sort(list, ArtifactComparator.INSTANCE);
 
-            getLog().info("\n" +
+            getLog().info("                                                                        \n" +
                     "[INFO] ------------------------------------------------------------------------\n" +
                     "[INFO] Listing " + project.getName() + " " + project.getId() + "\n" +
                     "[INFO] ------------------------------------------------------------------------\n" +
                     "[INFO] \n" +
                     "[INFO] --- \n" +
-                    "[INFO]");
+                    "[INFO] ");
             getLog().info("The following files have been resolved:");
             for (Artifact artifact : list)
                 getLog().info("   " + artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getType() + ":" + (artifact.getClassifier() != null ? artifact.getClassifier() + ":" : "") + artifact.getVersion() + ":" + artifact.getScope());

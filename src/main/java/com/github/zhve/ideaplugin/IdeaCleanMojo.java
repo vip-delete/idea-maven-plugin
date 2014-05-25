@@ -23,21 +23,12 @@ public class IdeaCleanMojo extends AbstractMojo {
     public void execute() throws MojoExecutionException, MojoFailureException {
         getLog().info("Delete Workspace Files:");
         for (MavenProject project : reactorProjects) {
-            deleteFile(project, "iml");
+            Util.deleteFileOrDirectory(getLog(), new File(project.getBasedir(), project.getArtifactId() + ".iml"));
             if (project.isExecutionRoot()) {
-                deleteFile(project, "ipr");
-                deleteFile(project, "iws");
+                Util.deleteFileOrDirectory(getLog(), new File(project.getBasedir(), ".idea"));
+                Util.deleteFileOrDirectory(getLog(), new File(project.getBasedir(), project.getArtifactId() + ".ipr"));
+                Util.deleteFileOrDirectory(getLog(), new File(project.getBasedir(), project.getArtifactId() + ".iws"));
             }
-        }
-    }
-
-    private void deleteFile(MavenProject project, String extension) throws MojoFailureException {
-        File file = new File(project.getBasedir(), project.getArtifactId() + "." + extension);
-        if (file.exists() && !file.isDirectory()) {
-            if (file.delete())
-                getLog().info(" " + file.getAbsolutePath());
-            else
-                getLog().error(file.getAbsolutePath());
         }
     }
 }

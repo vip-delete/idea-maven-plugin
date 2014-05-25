@@ -208,7 +208,7 @@ public class IdeaPluginMojo extends IdeaPluginMojoBase {
         context.put("assembleModulesIntoJars", assembleModulesIntoJars);
         context.put("jdkName", jdkName);
         context.put("jdkLevel", jdkLevel);
-        context.put("wildcardResourcePatterns", XMLUtil.escapeXmlAttribute(wildcardResourcePatterns));
+        context.put("wildcardResourcePatterns", Util.escapeXmlAttribute(wildcardResourcePatterns));
         List<MavenProject> warProjects = artifactHolder.getProjectsWithPackaging("war");
         // check id uniques
         Set<String> used = new HashSet<String>();
@@ -264,12 +264,12 @@ public class IdeaPluginMojo extends IdeaPluginMojoBase {
             context.put("warProject", warProject);
             warProjects.remove(warProject);
             context.put("otherWarProjects", warProjects);
-            context.put("applicationServerTitle", StringUtils.isEmpty(applicationServerTitle) ? warProject.getArtifactId() : XMLUtil.escapeXmlAttribute(applicationServerTitle));
+            context.put("applicationServerTitle", StringUtils.isEmpty(applicationServerTitle) ? warProject.getArtifactId() : Util.escapeXmlAttribute(applicationServerTitle));
             context.put("applicationServerName", gaeHome == null ? applicationServerName : "Google AppEngine Dev");
             context.put("applicationServerVersion", applicationServerVersion);
             context.put("openInBrowser", openInBrowser);
-            context.put("openInBrowserUrl", XMLUtil.escapeXmlAttribute(openInBrowserUrl));
-            context.put("vmParameters", vmParameters == null ? "" : XMLUtil.escapeXmlAttribute(vmParameters));
+            context.put("openInBrowserUrl", Util.escapeXmlAttribute(openInBrowserUrl));
+            context.put("vmParameters", vmParameters == null ? "" : Util.escapeXmlAttribute(vmParameters));
             context.put("deploymentContextPath", deploymentContextPath);
 
             if (gaeHome != null) {
@@ -286,6 +286,11 @@ public class IdeaPluginMojo extends IdeaPluginMojoBase {
         }
 
         createFile(context, velocityWorker.getIwsTemplate(), "iws");
+
+        getLog().info("");
+        getLog().info("Delete \".idea\"");
+        getLog().info("");
+        Util.deleteFileOrDirectory(getLog(), new File(project.getBasedir(), ".idea"));
     }
 
     private MavenProject getDefaultWarProject(List<MavenProject> warProjects) {

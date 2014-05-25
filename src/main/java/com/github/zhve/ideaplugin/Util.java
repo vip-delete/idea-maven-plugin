@@ -19,6 +19,9 @@ package com.github.zhve.ideaplugin;
  * under the License.
  */
 
+import org.apache.maven.plugin.logging.Log;
+
+import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,7 +30,7 @@ import java.util.regex.Pattern;
  * @see org.codehaus.plexus.util.xml.PrettyPrintXMLWriter
  * @since 08/07/2010
  */
-class XMLUtil {
+class Util {
     private static String escapeXml(String text) {
         text = text.replaceAll("&", "&amp;");
         text = text.replaceAll("<", "&lt;");
@@ -52,5 +55,25 @@ class XMLUtil {
         m.appendTail(b);
 
         return b.toString();
+    }
+
+    public static void deleteFileOrDirectory(Log log, File file) {
+        if (file.exists()) {
+            if (file.isDirectory()) {
+                // clean directory
+                File[] files = file.listFiles();
+                if (files != null) {
+                    for (File f : files)
+                        deleteFileOrDirectory(log, f);
+                }
+            }
+            // delete file or empty directory
+            if (file.delete())
+                log.info(" " + file.getAbsolutePath());
+            else
+                log.error(file.getAbsolutePath());
+        } else {
+            log.info(" " + file.getAbsolutePath());
+        }
     }
 }
