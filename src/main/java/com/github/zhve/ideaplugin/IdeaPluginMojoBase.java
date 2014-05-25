@@ -111,10 +111,6 @@ public abstract class IdeaPluginMojoBase extends AbstractMojo {
         return artifactHolder.getDependencies(project);
     }
 
-    public List<Artifact> getCommonDependencies() {
-        return artifactHolder.getCommonDependencies();
-    }
-
     public List<Artifact> getAllDependencies() {
         return artifactHolder.getAllDependencies();
     }

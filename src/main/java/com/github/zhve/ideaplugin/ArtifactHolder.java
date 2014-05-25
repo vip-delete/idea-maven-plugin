@@ -37,11 +37,6 @@ import java.util.*;
  */
 class ArtifactHolder {
     /**
-     * Common artifacts for all modules
-     */
-    private List<Artifact> commonDependencies;
-
-    /**
      * All dependencies of all modules except commonDependencies
      */
     private List<Artifact> allDependencies;
@@ -126,45 +121,15 @@ class ArtifactHolder {
         }
 
         // Find common dependencies
-        Map<String /*id+scope*/, Artifact> commonMap = new TreeMap<String, Artifact>();
         Set<Artifact> fullSet = new HashSet<Artifact>();
-        boolean added = false;
-        for (ArtifactDependencyHelper.DependencyData data : dependencyDataNewMap.values()) {
-            Map<String, Artifact> remoteMap = new HashMap<String, Artifact>();
-            for (Artifact artifact : data.getRemoteList())
-                remoteMap.put(artifact.getId() + ":" + artifact.getScope(), artifact);
-
-            // add to full
+        for (ArtifactDependencyHelper.DependencyData data : dependencyDataNewMap.values())
             fullSet.addAll(data.getRemoteList());
-
-            // add to common
-            if (added) {
-                commonMap.keySet().retainAll(remoteMap.keySet());
-            } else {
-                commonMap.putAll(remoteMap);
-                added = true;
-            }
-        }
-
-        // Remote commonSet from fullSet
-        fullSet.removeAll(commonMap.values());
-
-        log.info("");
-        log.info("Common Dependencies");
-        log.info("");
-        for (String id : commonMap.keySet())
-            log.info("  " + id);
 
         log.info("");
         log.info("Full Dependencies");
         log.info("");
         for (Artifact artifact : fullSet)
             log.info("  " + artifact.getId());
-
-        // Save commonDependencies
-        commonDependencies = new ArrayList<Artifact>(commonMap.values());
-        Collections.sort(this.commonDependencies, ArtifactComparator.INSTANCE);
-        commonDependencies = Collections.unmodifiableList(this.commonDependencies);
 
         // Save allDependencies
         allDependencies = new ArrayList<Artifact>(fullSet);
@@ -177,10 +142,7 @@ class ArtifactHolder {
         for (Map.Entry<MavenProject, ArtifactDependencyHelper.DependencyData> entry : dependencyDataNewMap.entrySet()) {
             MavenProject project = entry.getKey();
             // Remove commonSet from dependencies
-            List<Artifact> remoteList = new ArrayList<Artifact>();
-            for (Artifact artifact : entry.getValue().getRemoteList())
-                if (!commonMap.containsKey(artifact.getId() + ":" + artifact.getScope()))
-                    remoteList.add(artifact);
+            List<Artifact> remoteList = new ArrayList<Artifact>(entry.getValue().getRemoteList());
             List<Artifact> reactorList = new ArrayList<Artifact>(entry.getValue().getReactorList());
             Collections.sort(remoteList, ArtifactComparator.INSTANCE);
             Collections.sort(reactorList, ArtifactComparator.INSTANCE);
@@ -194,10 +156,6 @@ class ArtifactHolder {
     public List<Artifact> getDependencies(MavenProject project) {
         List<Artifact> artifacts = dependencyMap.get(project);
         return artifacts == null ? Collections.<Artifact>emptyList() : artifacts;
-    }
-
-    public List<Artifact> getCommonDependencies() {
-        return commonDependencies;
     }
 
     public List<Artifact> getAllDependencies() {

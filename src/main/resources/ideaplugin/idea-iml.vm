@@ -55,7 +55,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
 #if(!$packagingPom)
-    <orderEntry type="library" name="VirtualSharedLibrary" level="project" />
 #if($gaeHome)
     <orderEntry type="library" name="AppEngine API" level="project" />
     <orderEntry type="library" name="AppEngine ORM" level="project" />

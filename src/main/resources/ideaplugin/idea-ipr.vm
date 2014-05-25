@@ -90,23 +90,6 @@
 #end
   </component>
   <component name="libraryTable">
-    <library name="VirtualSharedLibrary">
-      <CLASSES>
-#foreach($artifact in $context.commonDependencies)
-        <root url="jar://$M/$context.getModuleLibraryJar($artifact)!/" />
-#end
-      </CLASSES>
-      <JAVADOC>
-#foreach($artifact in $context.commonDependencies)
-        <root url="jar://$M/$context.getModuleLibraryJavadocs($artifact)!/" />
-#end
-      </JAVADOC>
-      <SOURCES>
-#foreach($artifact in $context.commonDependencies)
-        <root url="jar://$M/$context.getModuleLibrarySources($artifact)!/" />
-#end
-      </SOURCES>
-    </library>
 #foreach($artifact in $context.allDependencies)
 #if(!$context.isReactorArtifact($artifact))
     <library name="$artifact.id">
