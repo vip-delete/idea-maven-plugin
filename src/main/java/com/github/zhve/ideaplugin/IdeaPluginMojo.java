@@ -241,9 +241,8 @@ public class IdeaPluginMojo extends IdeaPluginMojoBase {
             } else if ("GitHub".equalsIgnoreCase(system)) {
                 context.put("issueNavigationExist", Boolean.TRUE);
                 context.put("issueRegexp", "\\d+");
-                context.put("linkRegexp", url + "/issues/$0");
+                context.put("linkRegexp", url + "/$0");
             }
-
         }
 
         createFile(context, velocityWorker.getIprTemplate(), "ipr");
