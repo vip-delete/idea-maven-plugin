@@ -69,15 +69,6 @@
       <ConfirmationsSetting value="2" id="Add" />
       <ConfirmationsSetting value="2" id="Remove" />
     </component>
-    <component name="ProjectStructureProblems">
-      <ignored-problems>
-#foreach($artifact in $context.allDependencies)
-#if(!$context.isReactorArtifact($artifact))
-        <problem id="library-invalid-source-javadoc-path(library:project:$artifact.id)" />
-#end
-#end
-      </ignored-problems>
-    </component>
     <component name="ProjectView">
       <navigator currentView="ProjectPane" proportions="" version="1" splitterProportion="0.5">
         <hideEmptyPackages ProjectPane="$hideEmptyPackages" />

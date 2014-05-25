@@ -64,7 +64,7 @@
 #if($context.isReactorArtifact($artifact))
     <orderEntry type="module" scope="$context.getScope($artifact)" module-name="$artifact.artifactId" />
 #else
-    <orderEntry type="library" scope="$context.getScope($artifact)" name="$artifact.id" level="project" />
+    <orderEntry type="library" scope="$context.getScope($artifact)" name="Maven: $artifact.id" level="project" />
 #end
 #end
   </component>

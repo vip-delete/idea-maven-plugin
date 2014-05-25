@@ -91,7 +91,7 @@
   <component name="libraryTable">
 #foreach($artifact in $context.allDependencies)
 #if(!$context.isReactorArtifact($artifact))
-    <library name="$artifact.id">
+    <library name="Maven: $artifact.id">
       <CLASSES>
         <root url="jar://$M/$context.getModuleLibraryJar($artifact)!/" />
       </CLASSES>
