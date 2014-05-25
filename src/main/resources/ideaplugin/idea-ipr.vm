@@ -19,7 +19,6 @@
 #end
           </element>
           <element id="directory" name="lib">
-            <element id="library" level="project" name="VirtualSharedLibrary" />
 #foreach($artifact in $context.getDependencies($project))
 #if($context.isReactorArtifact($artifact))
 #if($assembleModulesIntoJars)

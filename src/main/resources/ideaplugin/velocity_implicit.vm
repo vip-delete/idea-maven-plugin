@@ -38,3 +38,5 @@
 #* @vtlvariable name="autoscrollFromSource" type="boolean" file="idea-iws.vm"*#
 #* @vtlvariable name="sortByType" type="boolean" file="idea-iws.vm"*#
 #* @vtlvariable name="otherWarProjects" type="java.util.List<org.apache.maven.project.MavenProject>" file="idea-iws.vm" *#
+#* @vtlvariable name="context" type="com.github.zhve.ideaplugin.IdeaPluginMojo" file="idea-iws.vm" *#
+#* @vtlvariable name="project" type="org.apache.maven.project.MavenProject" file="idea-iws.vm" *#
