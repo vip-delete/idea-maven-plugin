@@ -40,12 +40,12 @@
       <sourceFolder url="file://$directory" isTestSource="true" />
 #end
 #foreach($resource in $project.build.resources)
-#if((!$resource.targetPath)&&(!$resource.filtering))
+#if(!$resource.targetPath)
       <sourceFolder url="file://$resource.directory" isTestSource="false" />
 #end
 #end
 #foreach($resource in $project.build.testResources)
-#if((!$resource.targetPath)&&(!$resource.filtering))
+#if(!$resource.targetPath)
       <sourceFolder url="file://$resource.directory" isTestSource="true" />
 #end
 #end

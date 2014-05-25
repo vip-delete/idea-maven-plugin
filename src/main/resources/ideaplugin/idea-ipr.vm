@@ -28,7 +28,7 @@
 #end
 #else
 #if($context.isWebFriendlyScope($artifact))
-            <element id="library" level="project" name="$artifact.id" />
+            <element id="library" level="project" name="Maven: $artifact.id" />
 #end
 #end
 #end
