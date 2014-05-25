@@ -69,16 +69,18 @@ class ArtifactDependencyHelper {
                 Dependency dependency = (Dependency) object;
                 Artifact dependencyArtifact = toDependencyArtifact(artifactFactory, dependency);
                 boolean reactor = reactorArtifacts.contains(dependencyArtifact);
-                if (reactor)
-                    log.info("R " + dependencyArtifact.getId() + ":" + dependencyArtifact.getScope());
-                else
-                    log.info("  " + dependencyArtifact.getId() + ":" + dependencyArtifact.getScope());
-
-                // add to dependency
-                if (reactor)
-                    reactorData.add(dependencyArtifact);
-                else
-                    remoteData.add(dependencyArtifact);
+                String id = dependencyArtifact.getId() + ":" + dependencyArtifact.getScope();
+                if ("jar".equals(dependencyArtifact.getType())) {
+                    if (reactor) {
+                        log.info("R " + id);
+                        reactorData.add(dependencyArtifact);
+                    } else {
+                        log.info("  " + id);
+                        remoteData.add(dependencyArtifact);
+                    }
+                } else {
+                    log.info("O " + id + " (type=" + dependencyArtifact.getType() + ")");
+                }
             }
 
             // save dependency data for project
@@ -98,6 +100,7 @@ class ArtifactDependencyHelper {
             queue.add(project.getArtifact());
             while (!queue.isEmpty()) {
                 Artifact artifact = queue.poll();
+                log.info("# " + artifact.getId() + ":" + artifact.getScope());
                 DependencyData artifactDependencyData = dependencyMap.get(artifact);
                 // analyze all remote dependencies for given level
                 for (Artifact dependency : artifactDependencyData.getRemoteList()) {
@@ -119,12 +122,12 @@ class ArtifactDependencyHelper {
                                 log.info("C " + fullName);
                                 log.info("  " + project.getArtifact().getId());
                                 log.info("  " + "+-" + prevArtifact.getId() + ":" + prevArtifact.getScope());
-                                log.info("  " + "+-" + artifact.getId());
+                                log.info("  " + "+-" + artifact.getId() + ":" + artifact.getScope());
                                 log.info("  " + "  \\-" + fullName);
                             }
                         }
                     } else {
-                        log.info("O " + dependency.getId() + ":" + dependency.getScope());
+                        log.info("O " + dependency.getId() + ":" + dependency.getScope() + " (inherit=" + artifact.getId() + ":" + artifact.getScope() + ")");
                     }
                 }
 
@@ -150,12 +153,12 @@ class ArtifactDependencyHelper {
                                 log.info("C " + fullName);
                                 log.info("  " + project.getArtifact().getId());
                                 log.info("  " + "+-" + prevArtifact.getId() + ":" + prevArtifact.getScope());
-                                log.info("  " + "+-" + artifact.getId());
+                                log.info("  " + "+-" + artifact.getId() + ":" + artifact.getScope());
                                 log.info("  " + "  \\-" + fullName);
                             }
                         }
                     } else {
-                        log.info("O " + dependency.getId() + ":" + dependency.getScope());
+                        log.info("O " + dependency.getId() + ":" + dependency.getScope() + " (inherit=" + artifact.getId() + ":" + artifact.getScope() + ")");
                     }
                 }
             }

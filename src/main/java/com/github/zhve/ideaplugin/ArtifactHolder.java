@@ -78,6 +78,7 @@ class ArtifactHolder {
             ArtifactDependencyHelper.DependencyData dependencyData = entry.getValue();
 
             List<Artifact> remoteData = new ArrayList<Artifact>();
+            List<Artifact> reactorData = new ArrayList<Artifact>(dependencyData.getReactorList());
             if (!dependencyData.getRemoteList().isEmpty()) {
                 // search
                 ArtifactResolutionResult resolutionResult;
@@ -101,8 +102,17 @@ class ArtifactHolder {
                     log.info("After:");
                     for (Object resolutionNode : resolutionResult.getArtifactResolutionNodes()) {
                         Artifact art = ((ResolutionNode) resolutionNode).getArtifact();
-                        log.info("  " + art.getId() + ":" + art.getScope());
-                        remoteData.add(art);
+                        if (reactorArtifacts.contains(art)) {
+                            if (!reactorData.contains(art)) {
+                                reactorData.add(art);
+                                log.info("R " + art.getId() + ":" + art.getScope());
+                            } else {
+                                log.info("D " + art.getId() + ":" + art.getScope());
+                            }
+                        } else {
+                            log.info("  " + art.getId() + ":" + art.getScope());
+                            remoteData.add(art);
+                        }
                     }
                 } catch (ArtifactResolutionException e) {
                     // TODO: add flag to ignore resolution errors
@@ -112,12 +122,12 @@ class ArtifactHolder {
                     throw new MojoExecutionException(e.getMessage(), e);
                 }
             }
-            dependencyDataNewMap.put(project, new ArtifactDependencyHelper.DependencyData(remoteData, dependencyData.getReactorList()));
+            dependencyDataNewMap.put(project, new ArtifactDependencyHelper.DependencyData(remoteData, reactorData));
         }
 
         // Find common dependencies
-        Map<String, Artifact> commonMap = new TreeMap<String, Artifact>();
-        Map<String, Artifact> fullMap = new TreeMap<String, Artifact>();
+        Map<String /*id+scope*/, Artifact> commonMap = new TreeMap<String, Artifact>();
+        Set<Artifact> fullSet = new HashSet<Artifact>();
         boolean added = false;
         for (ArtifactDependencyHelper.DependencyData data : dependencyDataNewMap.values()) {
             Map<String, Artifact> remoteMap = new HashMap<String, Artifact>();
@@ -125,7 +135,7 @@ class ArtifactHolder {
                 remoteMap.put(artifact.getId() + ":" + artifact.getScope(), artifact);
 
             // add to full
-            fullMap.putAll(remoteMap);
+            fullSet.addAll(data.getRemoteList());
 
             // add to common
             if (added) {
@@ -137,7 +147,7 @@ class ArtifactHolder {
         }
 
         // Remote commonSet from fullSet
-        fullMap.keySet().removeAll(commonMap.keySet());
+        fullSet.removeAll(commonMap.values());
 
         log.info("");
         log.info("Common Dependencies");
@@ -148,8 +158,8 @@ class ArtifactHolder {
         log.info("");
         log.info("Full Dependencies");
         log.info("");
-        for (String id : fullMap.keySet())
-            log.info("  " + id);
+        for (Artifact artifact : fullSet)
+            log.info("  " + artifact.getId());
 
         // Save commonDependencies
         commonDependencies = new ArrayList<Artifact>(commonMap.values());
@@ -157,7 +167,7 @@ class ArtifactHolder {
         commonDependencies = Collections.unmodifiableList(this.commonDependencies);
 
         // Save allDependencies
-        allDependencies = new ArrayList<Artifact>(fullMap.values());
+        allDependencies = new ArrayList<Artifact>(fullSet);
         Collections.sort(allDependencies, ArtifactComparator.INSTANCE);
         allDependencies = Collections.unmodifiableList(allDependencies);
 
