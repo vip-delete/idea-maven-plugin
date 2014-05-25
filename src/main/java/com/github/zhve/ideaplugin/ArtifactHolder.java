@@ -123,16 +123,16 @@ class ArtifactHolder {
         for (ArtifactDependencyHelper.DependencyData data : dependencyDataNewMap.values())
             fullSet.addAll(data.getRemoteList());
 
-        log.info("");
-        log.info("Full Dependencies");
-        log.info("");
-        for (Artifact artifact : fullSet)
-            log.info("  " + artifact.getId());
-
         // Save allDependencies
         allDependencies = new ArrayList<Artifact>(fullSet);
         Collections.sort(allDependencies, ArtifactComparator.INSTANCE);
         allDependencies = Collections.unmodifiableList(allDependencies);
+
+        log.info("");
+        log.info("Full Dependencies");
+        log.info("");
+        for (Artifact artifact : allDependencies)
+            log.info("  " + artifact.getId());
 
         // Save dependencyMap
 
