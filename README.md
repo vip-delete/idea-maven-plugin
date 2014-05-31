@@ -12,11 +12,11 @@ Maven Integration doesn't have any configuration file, it just opens your projec
 
 How to Use
 ----------
-IDEA Maven Plugin is deployed in Maven Central and you can simple run
+IDEA Maven Plugin is deployed to Maven Central and you can simple run
 
 `mvn com.github.zhve:idea-maven-plugin:3.0b1:idea`
 
-If you want to use non default settings save [idea.bat](https://raw.githubusercontent.com/zhve/idea-maven-plugin/master/src/main/resources/ideaplugin/idea.bat) in your project root, edit parameters, and run:
+If you want to use non default settings, save [idea.bat](https://raw.githubusercontent.com/zhve/idea-maven-plugin/master/src/main/resources/ideaplugin/idea.bat) to your project root, edit parameters, and run:
 
 Create workspace: `idea idea`
 
