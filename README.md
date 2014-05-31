@@ -87,17 +87,17 @@ Parameters
 </tr>
 <tr>
   <td>optimizeImportsBeforeCommit</td>
-  <td>Optimize imports before commit (Commit Dialog)</td>
+  <td>Optimize imports before commit</td>
   <td>true</td>
 </tr>
 <tr>
   <td>reformatCodeBeforeCommit</td>
-  <td>Reformat code before commit (Commit Dialog)</td>
+  <td>Reformat code before commit</td>
   <td>false</td>
 </tr>
 <tr>
   <td>performCodeAnalysisBeforeCommit</td>
-  <td>Perform code analysis before commit (Commit Dialog)</td>
+  <td>Perform code analysis before commit</td>
   <td>false</td>
 </tr>
 </table>
@@ -132,7 +132,7 @@ Parameters
 <tr>
   <td>selectedWarArtifactId</td>
   <td>Selected configuration in Run/Debug menu</td>
-  <td>[use first war-packaging module]</td>
+  <td>[empty]</td>
 </tr>
 <tr>
   <td>vmParameters</td>
