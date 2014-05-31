@@ -88,7 +88,8 @@ public abstract class IdeaPluginMojoBase extends AbstractMojo {
     @Override
     public final void execute() throws MojoExecutionException, MojoFailureException {
         try {
-            artifactHolder = new ArtifactHolder(getLog(), reactorProjects, artifactFactory, artifactResolver, localRepository, artifactMetadataSource);
+            ArtifactDependencyResolver resolver = new ArtifactDependencyResolver(getLog(), artifactFactory, artifactResolver, localRepository, artifactMetadataSource);
+            artifactHolder = new ArtifactHolder(getLog(), resolver, reactorProjects);
             velocityWorker = new VelocityWorker();
             for (MavenProject project : reactorProjects) {
                 this.project = project;

@@ -78,7 +78,7 @@ public class IdeaPluginMojo extends IdeaPluginMojoBase {
     /**
      * Allow adding assertion @NotNull at runtime
      */
-    @Parameter(property = "assertNotNull", defaultValue = "true")
+    @Parameter(property = "assertNotNull", defaultValue = "false")
     private boolean assertNotNull;
 
     /**
@@ -97,7 +97,7 @@ public class IdeaPluginMojo extends IdeaPluginMojoBase {
     /**
      * Version of the web application server
      */
-    @Parameter(property = "applicationServerVersion", defaultValue = "7.0.53")
+    @Parameter(property = "applicationServerVersion", defaultValue = "7.0.54")
     private String applicationServerVersion;
 
     /**
@@ -287,10 +287,13 @@ public class IdeaPluginMojo extends IdeaPluginMojoBase {
 
         createFile(context, velocityWorker.getIwsTemplate(), "iws");
 
-        getLog().info("");
-        getLog().info("Delete \".idea\"");
-        getLog().info("");
-        Util.deleteFileOrDirectory(getLog(), new File(project.getBasedir(), ".idea"));
+        File idea = new File(project.getBasedir(), ".idea");
+        if (idea.exists()) {
+            getLog().info("");
+            getLog().info("Delete Workspace Files:");
+            getLog().info("");
+            Util.deleteFileOrDirectory(getLog(), idea);
+        }
     }
 
     private MavenProject getDefaultWarProject(List<MavenProject> warProjects) {

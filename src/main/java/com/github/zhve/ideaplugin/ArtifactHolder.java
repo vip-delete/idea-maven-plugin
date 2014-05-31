@@ -20,10 +20,6 @@ package com.github.zhve.ideaplugin;
  */
 
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.factory.ArtifactFactory;
-import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
-import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.apache.maven.artifact.resolver.*;
 import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
@@ -51,76 +47,24 @@ class ArtifactHolder {
      */
     private Set<Artifact> reactorArtifacts;
 
-    public ArtifactHolder(Log log, List<MavenProject> reactorProjects, ArtifactFactory artifactFactory, ArtifactResolver artifactResolver, ArtifactRepository localRepository, ArtifactMetadataSource artifactMetadataSource) throws MojoExecutionException {
+    public ArtifactHolder(Log log, ArtifactDependencyResolver resolver, List<MavenProject> reactorProjects) throws MojoExecutionException {
         // collect
         reactorArtifacts = new HashSet<Artifact>();
         for (MavenProject reactorProject : reactorProjects)
             reactorArtifacts.add(reactorProject.getArtifact());
         reactorArtifacts = Collections.unmodifiableSet(reactorArtifacts);
 
-        // Resolve dependencies
-        Map<MavenProject, ArtifactDependencyHelper.DependencyData> dependencyDataMap;
+        // Resolve
+        Map<MavenProject, ArtifactDependencyResolver.DependencyData> dependencyDataNewMap;
         try {
-            dependencyDataMap = ArtifactDependencyHelper.findDependencies(log, artifactFactory, reactorProjects);
+            dependencyDataNewMap = resolver.findDependencies(reactorProjects);
         } catch (InvalidVersionSpecificationException e) {
             throw new MojoExecutionException(e.getMessage(), e);
         }
 
-        // Resolve transitively
-        Map<MavenProject, ArtifactDependencyHelper.DependencyData> dependencyDataNewMap = new LinkedHashMap<MavenProject, ArtifactDependencyHelper.DependencyData>();
-        for (Map.Entry<MavenProject, ArtifactDependencyHelper.DependencyData> entry : dependencyDataMap.entrySet()) {
-            MavenProject project = entry.getKey();
-            ArtifactDependencyHelper.DependencyData dependencyData = entry.getValue();
-
-            List<Artifact> remoteData = new ArrayList<Artifact>();
-            List<Artifact> reactorData = new ArrayList<Artifact>(dependencyData.getReactorList());
-            if (!dependencyData.getRemoteList().isEmpty()) {
-                // search
-                ArtifactResolutionResult resolutionResult;
-                log.info("");
-                log.info("Resolve Transitively: " + project.getArtifact().getId());
-                log.info("");
-                log.info("Before:");
-                for (Artifact a : dependencyData.getRemoteList())
-                    log.info("  " + a.getId() + ":" + a.getScope());
-                log.info("");
-                try {
-                    resolutionResult = artifactResolver.resolveTransitively(
-                            new LinkedHashSet<Artifact>(dependencyData.getRemoteList()),
-                            project.getArtifact(),
-                            project.getManagedVersionMap(),
-                            localRepository,
-                            project.getRemoteArtifactRepositories(),
-                            artifactMetadataSource
-                    );
-                    // save search result
-                    log.info("After:");
-                    for (Object resolutionNode : resolutionResult.getArtifactResolutionNodes()) {
-                        Artifact art = ((ResolutionNode) resolutionNode).getArtifact();
-                        if (reactorArtifacts.contains(art)) {
-                            if (!reactorData.contains(art)) {
-                                reactorData.add(art);
-                                log.info("R " + art.getId() + ":" + art.getScope());
-                            } else {
-                                log.info("D " + art.getId() + ":" + art.getScope());
-                            }
-                        } else {
-                            log.info("  " + art.getId() + ":" + art.getScope());
-                            remoteData.add(art);
-                        }
-                    }
-                } catch (ArtifactResolutionException e) {
-                    throw new MojoExecutionException(e.getMessage(), e);
-                } catch (ArtifactNotFoundException e) {
-                    throw new MojoExecutionException(e.getMessage(), e);
-                }
-            }
-            dependencyDataNewMap.put(project, new ArtifactDependencyHelper.DependencyData(remoteData, reactorData));
-        }
-
         // Find common dependencies
         Set<Artifact> fullSet = new HashSet<Artifact>();
-        for (ArtifactDependencyHelper.DependencyData data : dependencyDataNewMap.values())
+        for (ArtifactDependencyResolver.DependencyData data : dependencyDataNewMap.values())
             fullSet.addAll(data.getRemoteList());
 
         // Save allDependencies
@@ -137,7 +81,7 @@ class ArtifactHolder {
         // Save dependencyMap
 
         this.dependencyMap = new HashMap<MavenProject, List<Artifact>>();
-        for (Map.Entry<MavenProject, ArtifactDependencyHelper.DependencyData> entry : dependencyDataNewMap.entrySet()) {
+        for (Map.Entry<MavenProject, ArtifactDependencyResolver.DependencyData> entry : dependencyDataNewMap.entrySet()) {
             MavenProject project = entry.getKey();
             // Remove commonSet from dependencies
             List<Artifact> remoteList = new ArrayList<Artifact>(entry.getValue().getRemoteList());

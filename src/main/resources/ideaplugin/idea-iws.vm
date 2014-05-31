@@ -5,6 +5,7 @@
     <ignored mask="*.iml" />
     <ignored mask="*.ipr" />
     <ignored mask="*.iws" />
+    <ignored path="idea.bat" />
   </component>
   <component name="CommittedChangesCache">
     <option name="initialCount" value="100" />

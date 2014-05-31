@@ -21,6 +21,9 @@ package com.github.zhve.ideaplugin;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
+import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
+import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.resolver.*;
 import org.apache.maven.artifact.resolver.filter.ExcludesArtifactFilter;
 import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
 import org.apache.maven.artifact.versioning.VersionRange;
@@ -34,18 +37,24 @@ import java.util.*;
 
 /**
  * @author Vasiliy Zhukov
- * @since 5/11/2014
+ * @since 5/31/2014
  */
-class ArtifactDependencyHelper {
-    /**
-     * Transitive resolve all dependencies for reactor projects
-     *
-     * @param artifactFactory standard Maven's factory to create artifacts
-     * @param reactorProjects reactor projects
-     * @return dependency map: reactor project -> dependency data
-     * @throws InvalidVersionSpecificationException error
-     */
-    public static Map<MavenProject, DependencyData> findDependencies(Log log, ArtifactFactory artifactFactory, List<MavenProject> reactorProjects) throws InvalidVersionSpecificationException {
+public class ArtifactDependencyResolver {
+    private Log log;
+    private ArtifactFactory artifactFactory;
+    private ArtifactResolver artifactResolver;
+    private ArtifactRepository localRepository;
+    private ArtifactMetadataSource artifactMetadataSource;
+
+    public ArtifactDependencyResolver(Log log, ArtifactFactory artifactFactory, ArtifactResolver artifactResolver, ArtifactRepository localRepository, ArtifactMetadataSource artifactMetadataSource) {
+        this.log = log;
+        this.artifactFactory = artifactFactory;
+        this.artifactResolver = artifactResolver;
+        this.localRepository = localRepository;
+        this.artifactMetadataSource = artifactMetadataSource;
+    }
+
+    public Map<MavenProject, DependencyData> findDependencies(List<MavenProject> reactorProjects) throws InvalidVersionSpecificationException {
         // collect ids
         Set<Artifact> reactorArtifacts = new HashSet<Artifact>();
         log.info("");
@@ -56,6 +65,37 @@ class ArtifactDependencyHelper {
             reactorArtifacts.add(reactorProject.getArtifact());
         }
 
+        // Resolve reactor dependencies
+        Map<MavenProject, DependencyData> dependencyDataMap = findDependencies(log, artifactFactory, reactorArtifacts, reactorProjects);
+
+        // Resolve remote dependency transitively
+        Map<MavenProject, DependencyData> dependencyDataNewMap = new LinkedHashMap<MavenProject, DependencyData>();
+        for (Map.Entry<MavenProject, DependencyData> entry : dependencyDataMap.entrySet()) {
+            MavenProject project = entry.getKey();
+            log.info("");
+            log.info("Resolve Transitively: " + project.getArtifact().getId());
+            log.info("");
+            DependencyData dependencyData = entry.getValue();
+            List<Artifact> remoteData = new ArrayList<Artifact>();
+            List<Artifact> reactorData = new ArrayList<Artifact>(dependencyData.getReactorList());
+            List<Artifact> remoteUnresolvedList = new ArrayList<Artifact>(dependencyData.getRemoteList());
+            tryResolve(project, reactorArtifacts, remoteData, reactorData, remoteUnresolvedList);
+            dependencyDataNewMap.put(project, new DependencyData(remoteData, reactorData));
+        }
+
+        return dependencyDataNewMap;
+    }
+
+    /**
+     * Transitive resolve all dependencies for reactor projects
+     *
+     * @param artifactFactory standard Maven's factory to create artifacts
+     * @param reactorArtifacts reactor artifacts
+     * @param reactorProjects reactor projects
+     * @return dependency map: reactor project -> dependency data
+     * @throws InvalidVersionSpecificationException error
+     */
+    private Map<MavenProject, DependencyData> findDependencies(Log log, ArtifactFactory artifactFactory, Set<Artifact> reactorArtifacts, List<MavenProject> reactorProjects) throws InvalidVersionSpecificationException {
         // artifact -> all transitive dependencies
         Map<Artifact, DependencyData> dependencyMap = new HashMap<Artifact, DependencyData>();
         log.info("");
@@ -174,7 +214,7 @@ class ArtifactDependencyHelper {
      * @return artifact
      * @throws InvalidVersionSpecificationException if VersionRange is invalid
      */
-    private static Artifact toDependencyArtifact(ArtifactFactory artifactFactory, Dependency dependency) throws InvalidVersionSpecificationException {
+    private Artifact toDependencyArtifact(ArtifactFactory artifactFactory, Dependency dependency) throws InvalidVersionSpecificationException {
         // instantiate
         Artifact dependencyArtifact = artifactFactory.createDependencyArtifact(dependency.getGroupId(),
                 dependency.getArtifactId(),
@@ -215,6 +255,48 @@ class ArtifactDependencyHelper {
         if (dependencyArtifact != null)
             dependencyArtifact.setDependencyFilter(dependency.getDependencyFilter());
         return dependencyArtifact;
+    }
+
+    private void tryResolve(MavenProject project, Set<Artifact> reactorArtifacts, List<Artifact> remoteData, List<Artifact> reactorData, List<Artifact> remoteUnresolvedList) {
+        // search
+        ArtifactResolutionResult resolutionResult;
+        log.info("Before:");
+        for (Artifact a : remoteUnresolvedList)
+            log.info("  " + a.getId() + ":" + a.getScope());
+        log.info("");
+        try {
+            resolutionResult = artifactResolver.resolveTransitively(
+                    new LinkedHashSet<Artifact>(remoteUnresolvedList),
+                    project.getArtifact(),
+                    project.getManagedVersionMap(),
+                    localRepository,
+                    project.getRemoteArtifactRepositories(),
+                    artifactMetadataSource
+            );
+            // save search result
+            log.info("After:");
+            for (Object resolutionNode : resolutionResult.getArtifactResolutionNodes()) {
+                Artifact art = ((ResolutionNode) resolutionNode).getArtifact();
+                if (reactorArtifacts.contains(art)) {
+                    if (!reactorData.contains(art)) {
+                        reactorData.add(art);
+                        log.info("R " + art.getId() + ":" + art.getScope());
+                    } else {
+                        log.info("D " + art.getId() + ":" + art.getScope());
+                    }
+                } else {
+                    log.info("  " + art.getId() + ":" + art.getScope());
+                    remoteData.add(art);
+                }
+            }
+            // clear unresolved
+            remoteUnresolvedList.clear();
+        } catch (ArtifactResolutionException e) {
+            log.error(e.getMessage());
+            remoteData.addAll(remoteUnresolvedList);
+        } catch (ArtifactNotFoundException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     // Classes
