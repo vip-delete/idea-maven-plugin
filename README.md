@@ -111,8 +111,8 @@ Parameters
 </tr>
 <tr>
   <td>applicationServerTitle</td>
-  <td>Title of your Run/Debug Configuration menu item</td>
-  <td>[using war-packaging artifactId]</td>
+  <td>Run/Debug Configuration menu item</td>
+  <td>[empty]</td>
 </tr>
 <tr>
   <td>applicationServerName</td>
@@ -141,7 +141,7 @@ Parameters
 </tr>
 <tr>
   <td>openInBrowser</td>
-  <td>Enables/disables browser auto launch</td>
+  <td>On/Off browser auto launch</td>
   <td>false</td>
 </tr>
 <tr>
@@ -156,7 +156,7 @@ Parameters
 </tr>
 <tr>
   <td>assembleModulesIntoJars</td>
-  <td>Enable/disable assembling modules to jars</td>
+  <td>On/Off assembling modules to jars</td>
   <td>true</td>
 </tr>
 <tr>
