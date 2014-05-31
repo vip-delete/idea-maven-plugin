@@ -133,4 +133,4 @@ set command=%command% -DwildcardResourcePatterns="%wildcardResourcePatterns%"
 :wildcardResourcePatterns
 
 @echo on
-mvn %command% com.github.zhve:idea-maven-plugin:1.7:%1
+mvn %command% com.github.zhve:idea-maven-plugin:3.0b1:%1

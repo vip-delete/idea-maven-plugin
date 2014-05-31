@@ -67,6 +67,6 @@ public class GenerateBat {
 
         System.out.println("\n" +
                 "@echo on\n" +
-                "mvn %command% com.github.zhve:idea-maven-plugin:1.7:%1\n");
+                "mvn %command% com.github.zhve:idea-maven-plugin:3.0b1:%1\n");
     }
 }
