@@ -12,7 +12,9 @@ Maven Integration doesn't have any configuration file, it just opens your projec
 
 How to Use
 ----------
-IDEA Maven Plugin is deployed in Maven Central and you can simple run `mvn com.github.zhve:idea-maven-plugin:3.0b1:idea`
+IDEA Maven Plugin is deployed in Maven Central and you can simple run
+
+`mvn com.github.zhve:idea-maven-plugin:3.0b1:idea`
 
 If you want to use non default settings save [idea.bat](https://raw.githubusercontent.com/zhve/idea-maven-plugin/master/src/main/resources/ideaplugin/idea.bat) in your project root, edit parameters, and run:
 
@@ -114,7 +116,7 @@ Parameters
 </tr>
 <tr>
   <td>applicationServerName</td>
-  <td>Name of the application server: Tomcat or Jetty</td>
+  <td>Application server: Tomcat or Jetty</td>
   <td>Tomcat</td>
 </tr>
 <tr>
@@ -125,7 +127,7 @@ Parameters
 <tr>
   <td>applicationServerFullName</td>
   <td>Full name of the application server</td>
-  <td>[name + " " + version]</td>
+  <td>[empty]</td>
 </tr>
 <tr>
   <td>selectedWarArtifactId</td>
@@ -154,7 +156,7 @@ Parameters
 </tr>
 <tr>
   <td>assembleModulesIntoJars</td>
-  <td>Enable/disable assembling modules into jars in war</td>
+  <td>Enable/disable assembling modules to jars</td>
   <td>true</td>
 </tr>
 <tr>
